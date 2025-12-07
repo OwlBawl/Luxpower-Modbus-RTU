@@ -1,0 +1,5 @@
+{
+  "name": "Luxpower Modbus RTU",
+  "render_readme": true,
+  "domains": ["sensor", "number", "select"]
+}

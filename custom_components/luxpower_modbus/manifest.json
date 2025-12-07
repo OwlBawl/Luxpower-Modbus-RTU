@@ -1,0 +1,24 @@
+{
+  "domain": "luxpower_modbus",
+  "name": "Luxpower Modbus RTU",
+  "version": "0.1.0",
+  "documentation": "https://github.com/Andru/Luxpower-Modbus-RTU",
+  "issue_tracker": "https://github.com/Andru/Luxpower-Modbus-RTU/issues",
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "codeowners": [],
+  "requirements": [
+    "pymodbus>=3.1.2"
+  ],
+  "dependencies": [],
+  "loggers": [
+    "luxpower_modbus",
+    "pymodbus"
+  ],
+  "domains": [
+    "sensor",
+    "number",
+    "select",
+    "switch"
+  ]
+}
