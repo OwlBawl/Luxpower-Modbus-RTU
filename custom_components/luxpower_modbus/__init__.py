@@ -104,7 +104,7 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
         try:
             if register_type == "input":
                 result = self.client.read_input_registers(min_addr, count, self.slave_id)
-            else: # holding
+            else:  # holding
                 result = self.client.read_holding_registers(min_addr, count, self.slave_id)
 
             if result.isError():
@@ -115,7 +115,7 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
                 idx = desc.register_address - min_addr
                 
                 # For switches, we store the raw register value keyed by register address
-                if hasattr(desc, 'bit'): 
+                if hasattr(desc, 'bit'):
                     data[f"register_{desc.register_address}"] = result.registers[idx]
                     continue
 
@@ -140,7 +140,7 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
             return data
         except ConnectionException as e:
             _LOGGER.error("Error reading modbus registers: %s", e)
-            return None # Indicate error
+            return None  # Indicate error
 
     async def _async_update_data(self):
         """Fetch data from inverter."""
