@@ -66,9 +66,10 @@ class LuxpowerModbusSwitch(CoordinatorEntity[LuxpowerModbusDataCoordinator], Swi
                     return
 
                 # Read current value
-                read_result = await self.hass.async_add_executor_job(
-                    client.read_holding_registers, address, 1, self.coordinator.slave_id
-                )
+                def do_read():
+                    return client.read_holding_registers(address, 1, unit=self.coordinator.slave_id)
+                read_result = await self.hass.async_add_executor_job(do_read)
+                
                 if read_result.isError():
                     _LOGGER.error("Failed to read register %s before writing", address)
                     return
@@ -82,10 +83,11 @@ class LuxpowerModbusSwitch(CoordinatorEntity[LuxpowerModbusDataCoordinator], Swi
                     new_value = current_value & ~(1 << bit)
                 
                 # Write new value
+                def do_write():
+                    client.write_register(address, new_value, unit=self.coordinator.slave_id)
+
                 if new_value != current_value:
-                    await self.hass.async_add_executor_job(
-                        client.write_register, address, new_value, self.coordinator.slave_id
-                    )
+                    await self.hass.async_add_executor_job(do_write)
 
             except Exception as e:
                 _LOGGER.error("Error writing to modbus register %s: %s", address, e)
