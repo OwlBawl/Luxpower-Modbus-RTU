@@ -28,9 +28,6 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH]
 
-# Import config flow
-from . import config_flow  # noqa: F401, E402
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Luxpower Modbus RTU from a config entry."""
