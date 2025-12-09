@@ -42,7 +42,7 @@ def signed_int(val: int) -> int:
     return val
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LuxpowerModbusSensorEntityDescription(SensorEntityDescription):
     """A class that describes sensor entities."""
     register_address: int | None = None
@@ -50,19 +50,19 @@ class LuxpowerModbusSensorEntityDescription(SensorEntityDescription):
     value_fn: Callable[[int], float] | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LuxpowerModbus32bitSensorEntityDescription(LuxpowerModbusSensorEntityDescription):
     """A class that describes 32-bit sensor entities."""
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LuxpowerModbusNumberEntityDescription(NumberEntityDescription):
     """A class that describes number entities."""
     register_address: int | None = None
     scale: float = 1.0
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LuxpowerModbusSelectEntityDescription(SelectEntityDescription):
     """A class that describes select entities."""
     register_address: int | None = None
@@ -70,7 +70,7 @@ class LuxpowerModbusSelectEntityDescription(SelectEntityDescription):
     value_map: dict[int, str] | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class LuxpowerModbusSwitchEntityDescription(SwitchEntityDescription):
     """A class that describes switch entities."""
     register_address: int

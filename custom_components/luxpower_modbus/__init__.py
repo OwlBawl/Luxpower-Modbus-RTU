@@ -1,16 +1,15 @@
 """The Luxpower Modbus RTU integration."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import timedelta
-import asyncio
 import struct
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PORT, CONF_SCAN_INTERVAL, CONF_SLAVE, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-
 from pymodbus.client import ModbusSerialClient
 from pymodbus.exceptions import ConnectionException
 
@@ -26,7 +25,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -61,7 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        coordinator = hass.data[DOMAIN].pop(entry.entry_id)
+        coordinator: LuxpowerModbusDataCoordinator = hass.data[DOMAIN].pop(entry.entry_id)
         coordinator.client.close()
     return unload_ok
 
@@ -69,11 +68,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the inverter."""
 
-    def __init__(self, hass, client, slave_id, update_interval):
+    def __init__(self, hass: HomeAssistant, client: ModbusSerialClient, slave_id: int, update_interval: timedelta) -> None:
         """Initialize."""
         self.client = client
         self.slave_id = slave_id
-        self.data = {}
+        self.data: dict[str, any] = {}
         self.lock = asyncio.Lock()
 
         super().__init__(
@@ -83,7 +82,7 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
             update_interval=update_interval,
         )
 
-    def _read_registers(self, register_type: str, descriptions: list):
+    def _read_registers(self, register_type: str, descriptions: list) -> dict | None:
         """Read a range of registers."""
         if not descriptions:
             return {}
@@ -104,13 +103,13 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
         try:
             if register_type == "input":
                 result = self.client.read_input_registers(min_addr, count, self.slave_id)
-            else: # holding
+            else:  # holding
                 result = self.client.read_holding_registers(min_addr, count, self.slave_id)
 
             if result.isError():
                 raise ConnectionException(f"Modbus error: {result}")
             
-            data = {}
+            data: dict[str, any] = {}
             for desc in descriptions:
                 idx = desc.register_address - min_addr
                 
@@ -123,6 +122,7 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
                     if (idx + 1) < len(result.registers):
                         low_word = result.registers[idx]
                         high_word = result.registers[idx + 1]
+                        # Inverter uses L/H byte order, so pack high word then low word for big-endian
                         raw_val = struct.unpack('>I', struct.pack('>HH', high_word, low_word))[0]
                     else:
                         continue
@@ -140,20 +140,23 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
             return data
         except ConnectionException as e:
             _LOGGER.error("Error reading modbus registers: %s", e)
-            return None # Indicate error
+            return None  # Indicate error
 
-    async def _async_update_data(self):
+    async def _async_update_data(self) -> dict:
         """Fetch data from inverter."""
         async with self.lock:
             try:
-                if not self.client.connect():
+                if not await self.hass.async_add_executor_job(self.client.connect):
                     raise UpdateFailed("Failed to connect to Modbus device")
 
+                all_input_sensors = list(INPUT_REGISTERS_SENSORS) + list(INPUT_REGISTERS_SENSORS_32BIT)
+                all_holding_entities = list(HOLDING_REGISTERS_NUMBERS) + list(HOLDING_REGISTERS_SELECTS) + list(HOLDING_REGISTERS_SWITCHES)
+
                 input_data = await self.hass.async_add_executor_job(
-                    self._read_registers, "input", list(INPUT_REGISTERS_SENSORS) + list(INPUT_REGISTERS_SENSORS_32BIT)
+                    self._read_registers, "input", all_input_sensors
                 )
                 holding_data = await self.hass.async_add_executor_job(
-                    self._read_registers, "holding", list(HOLDING_REGISTERS_NUMBERS) + list(HOLDING_REGISTERS_SELECTS) + list(HOLDING_REGISTERS_SWITCHES)
+                    self._read_registers, "holding", all_holding_entities
                 )
 
                 if input_data is None or holding_data is None:
@@ -164,4 +167,4 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
                 raise UpdateFailed(f"Error communicating with inverter: {e}") from e
             finally:
                 if self.client.is_socket_open():
-                    self.client.close()
+                    await self.hass.async_add_executor_job(self.client.close)
