@@ -14,11 +14,5 @@
   "loggers": [
     "luxpower_modbus",
     "pymodbus"
-  ],
-  "domains": [
-    "sensor",
-    "number",
-    "select",
-    "switch"
   ]
 }

@@ -5,7 +5,6 @@ from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_PORT, CONF_SCAN_INTERVAL, CONF_SLAVE
-from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -23,10 +22,11 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class LuxpowerModbusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class LuxpowerModbusConfigFlow(config_entries.ConfigFlow):
     """Handle a config flow for Luxpower Modbus RTU."""
 
     VERSION = 1
+    DOMAIN = DOMAIN
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Handle the initial step."""
