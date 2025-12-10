@@ -67,7 +67,7 @@ class LuxpowerModbusSwitch(CoordinatorEntity[LuxpowerModbusDataCoordinator], Swi
 
                 # Read current value
                 def do_read():
-                    return client.read_holding_registers(address, 1, unit=self.coordinator.slave_id)
+                    return client.read_holding_registers(address, 1, slave=self.coordinator.slave_id)
                 read_result = await self.hass.async_add_executor_job(do_read)
                 
                 if read_result.isError():
@@ -84,7 +84,7 @@ class LuxpowerModbusSwitch(CoordinatorEntity[LuxpowerModbusDataCoordinator], Swi
                 
                 # Write new value
                 def do_write():
-                    client.write_register(address, new_value, unit=self.coordinator.slave_id)
+                    client.write_register(address, new_value, slave=self.coordinator.slave_id)
 
                 if new_value != current_value:
                     await self.hass.async_add_executor_job(do_write)

@@ -66,7 +66,7 @@ class LuxpowerModbusSelect(CoordinatorEntity[LuxpowerModbusDataCoordinator], Sel
                 if not client.connect():
                     _LOGGER.error("Failed to connect to Modbus device for writing")
                     return False
-                client.write_register(address, value_to_write, unit=self.coordinator.slave_id)
+                client.write_register(address, value_to_write, slave=self.coordinator.slave_id)
                 return True
             except Exception as e:
                 _LOGGER.error("Error writing to modbus register %s: %s", address, e)

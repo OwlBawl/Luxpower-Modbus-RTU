@@ -102,9 +102,9 @@ class LuxpowerModbusDataCoordinator(DataUpdateCoordinator):
 
         try:
             if register_type == "input":
-                result = self.client.read_input_registers(min_addr, count, unit=self.slave_id)
+                result = self.client.read_input_registers(min_addr, count, slave=self.slave_id)
             else:  # holding
-                result = self.client.read_holding_registers(min_addr, count, unit=self.slave_id)
+                result = self.client.read_holding_registers(min_addr, count, slave=self.slave_id)
 
             if result.isError():
                 raise ConnectionException(f"Modbus error: {result}")
